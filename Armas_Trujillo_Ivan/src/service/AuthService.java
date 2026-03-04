@@ -16,18 +16,18 @@ public class AuthService {
 
 }
 
-private void inicializarSistema(){
-try {
-    if(!Files.exists(carpetaData)){
-Files.createDirectories(carpetaData);     
+    private void inicializarSistema() {
+        try {
+            if (!Files.exists(carpetaData)) {
+                Files.createDirectories(carpetaData);
+            }
+            if (!Files.exists(ficheroUsers)) {
+                Files.createFile(ficheroUsers);
+            }
+        } catch (IOException e) {
+            System.out.println("Error crítico inicializando ficheros: " + e.getMessage());
+        }
     }
-    if (!Files.exists(ficheroUsers)){
-        Files.createFile(ficheroUsers);
-    }
-} catch (IOException e) {
-    System.out.println("Error crítico inicializando ficheros: " + e.getMessage());
-}
-}
 
 public boolean registrarUsuario(String email, String password) {
         if (email.isBlank() || password.isBlank()) return false;
@@ -35,3 +35,20 @@ public boolean registrarUsuario(String email, String password) {
             System.out.println("Error: El usuario ya está registrado.");
             return false;
         }
+        String hashedPassword = SecurityUtils.hashPassword(password);
+        String linea = email + ";" + hashedPassword;
+
+    
+        try (BufferedWriter writer = Files.newBufferedWriter(ficheroUsers, StandardOpenOption.APPEND)) {
+            writer.write(linea);
+            writer.newLine();
+            
+            
+            Path carpetaUsuario = carpetaData.resolve("usuarios").resolve(email);
+            Files.createDirectories(carpetaUsuario);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Error al guardar usuario: " + e.getMessage());
+            return false;
+        }
+    }
