@@ -10,11 +10,9 @@ public class AuthService {
     private final Path carpetaData = Path.of("data");
     private final Path ficheroUsers = carpetaData.resolve("user.txt");
 
-    public AuthenService(){
+    public AuthService() {
         inicializarSistema();
     }
-
-}
 
     private void inicializarSistema() {
         try {
@@ -29,8 +27,9 @@ public class AuthService {
         }
     }
 
-public boolean registrarUsuario(String email, String password) {
-        if (email.isBlank() || password.isBlank()) return false;
+    public boolean registrarUsuario(String email, String password) {
+        if (email.isBlank() || password.isBlank())
+            return false;
         if (usuarioExiste(email)) {
             System.out.println("Error: El usuario ya está registrado.");
             return false;
@@ -38,12 +37,10 @@ public boolean registrarUsuario(String email, String password) {
         String hashedPassword = SecurityUtils.hashPassword(password);
         String linea = email + ";" + hashedPassword;
 
-    
         try (BufferedWriter writer = Files.newBufferedWriter(ficheroUsers, StandardOpenOption.APPEND)) {
             writer.write(linea);
             writer.newLine();
-            
-            
+
             Path carpetaUsuario = carpetaData.resolve("usuarios").resolve(email);
             Files.createDirectories(carpetaUsuario);
             return true;
@@ -52,3 +49,35 @@ public boolean registrarUsuario(String email, String password) {
             return false;
         }
     }
+
+    public boolean iniciarSesion(String email, String password) {
+        String hashedInput = SecurityUtils.hashPassword(password);
+
+        try (BufferedReader reader = Files.newBufferedReader(ficheroUsers)) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                String[] partes = linea.split(";");
+                if (partes.length == 2 && partes[0].equals(email) && partes[1].equals(hashedInput)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error al leer usuarios: " + e.getMessage());
+        }
+        return false;
+    }
+
+    private boolean usuarioExiste(String email) {
+        try (BufferedReader reader = Files.newBufferedReader(ficheroUsers)) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (linea.split(";")[0].equals(email)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+
+        }
+        return false;
+    }
+}
